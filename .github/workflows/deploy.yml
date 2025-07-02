@@ -1,5 +1,4 @@
-# .github/workflows/deploy-netlify.yml
-name: Central Deploy Rule
+name: Reusable Netlify Deploy
 
 on:
   workflow_call:
