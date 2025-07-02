@@ -43,7 +43,6 @@ jobs:
         run: |
           npm ci
           npm run build
-          npx netlify deploy --auth $NETLIFY_AUTH_TOKEN --site $NETLIFY_SITE_ID --dir=dist --prod=${{ inputs.production }}
 
       - name: Output Deployment URL
         run: echo "Deployed to ${{ inputs.url }}"
