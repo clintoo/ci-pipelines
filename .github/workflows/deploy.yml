@@ -1,0 +1,35 @@
+name: Deploy to Netlify (Staging & Production)
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2.0.0
+        with:
+          publish-dir: ".next"
+          production-deploy: ${{ github.ref == 'refs/heads/main' }}
+          netlify-auth-token: ${{ secrets.ACCESS_TOKEN }}
+          netlify-site-id: ${{ github.ref == 'refs/heads/main' && secrets.PROD_ID || secrets.STAGING_ID }}
+        env:
+          CI: true
+
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+      url: ${{ github.ref == 'refs/heads/main' && 'https://xtremeart.netlify.app' || 'https://formyeyes.netlify.app' }}
