@@ -1,15 +1,9 @@
-name: Reusable Netlify Deploy
+name: Deploy to Netlify
 
 on:
   workflow_call:
     inputs:
       environment:
-        required: true
-        type: string
-      prod_site_id:
-        required: true
-        type: string
-      staging_site_id:
         required: true
         type: string
       url:
@@ -21,35 +15,35 @@ on:
     secrets:
       ACCESS_TOKEN:
         required: true
+      PROD_ID:
+        required: true
+      STAGING_ID:
+        required: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.environment }}
-      url: ${{ inputs.url }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - run: npm ci
-      - run: npm run build
-
-      - name: Select Netlify Site ID
-        id: select_site_id
+      - name: Set Site ID
+        id: site_id
         run: |
-          if [ "${{ inputs.production }}" = "true" ]; then
-            echo "SITE_ID=${{ inputs.prod_site_id }}" >> $GITHUB_ENV
+          if ${{ inputs.production }}; then
+            echo "SITE_ID=${{ secrets.PROD_ID }}" >> $GITHUB_ENV
           else
-            echo "SITE_ID=${{ inputs.staging_site_id }}" >> $GITHUB_ENV
+            echo "SITE_ID=${{ secrets.STAGING_ID }}" >> $GITHUB_ENV
           fi
 
       - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2.0.0
-        with:
-          publish-dir: ".next"
-          production-deploy: ${{ inputs.production }}
-          netlify-auth-token: ${{ secrets.ACCESS_TOKEN }}
-          netlify-site-id: ${{ env.SITE_ID }}
         env:
-          CI: true
+          NETLIFY_AUTH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          NETLIFY_SITE_ID: ${{ env.SITE_ID }}
+        run: |
+          npm ci
+          npm run build
+          npx netlify deploy --auth $NETLIFY_AUTH_TOKEN --site $NETLIFY_SITE_ID --dir=dist --prod=${{ inputs.production }}
+
+      - name: Output Deployment URL
+        run: echo "Deployed to ${{ inputs.url }}"
